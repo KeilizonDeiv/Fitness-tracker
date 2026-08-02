@@ -4,11 +4,12 @@ import { UserProfile } from '@/types';
 import { STORAGE_KEYS } from '@/services/storageService';
 
 const DEFAULT_PROFILE: UserProfile = {
-  name: 'Keilizon',
+  name: '',
   heightCm: 170,
   startingWeightKg: 70,
   weeklyWorkoutTarget: 4,
   dailyWaterTargetMl: 2500,
+  hasOnboarded: false,
 };
 
 interface ProfileState {
