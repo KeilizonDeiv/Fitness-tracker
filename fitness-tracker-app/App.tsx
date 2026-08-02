@@ -11,17 +11,21 @@ import { useMetricsStore } from '@/store/metricsStore';
 import { useWaterStore } from '@/store/waterStore';
 import { useGoalsStore } from '@/store/goalsStore';
 import { useProfileStore } from '@/store/profileStore';
+import { useSettingsStore, useResolvedThemeMode } from '@/store/settingsStore';
 
 export default function App() {
   const [hydrated, setHydrated] = useState(false);
   const [splashDone, setSplashDone] = useState(false);
-  const [onboarded, setOnboarded] = useState(false);
+
+  const hasOnboarded = useProfileStore((s) => s.profile.hasOnboarded);
+  const resolvedTheme = useResolvedThemeMode();
 
   const hydrateWorkouts = useWorkoutStore((s) => s.hydrate);
   const hydrateMetrics = useMetricsStore((s) => s.hydrate);
   const hydrateWater = useWaterStore((s) => s.hydrate);
   const hydrateGoals = useGoalsStore((s) => s.hydrate);
   const hydrateProfile = useProfileStore((s) => s.hydrate);
+  const hydrateSettings = useSettingsStore((s) => s.hydrate);
 
   useEffect(() => {
     (async () => {
@@ -31,8 +35,8 @@ export default function App() {
         hydrateWater(),
         hydrateGoals(),
         hydrateProfile(),
+        hydrateSettings(),
       ]);
-      setOnboarded(useProfileStore.getState().profile.hasOnboarded);
       setHydrated(true);
     })();
   }, []);
@@ -41,13 +45,13 @@ export default function App() {
     return <SplashScreen onFinish={() => setSplashDone(true)} />;
   }
 
-  if (!onboarded) {
-    return <OnboardingScreen onDone={() => setOnboarded(true)} />;
+  if (!hasOnboarded) {
+    return <OnboardingScreen />;
   }
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" />
+      <StatusBar style={resolvedTheme === 'light' ? 'dark' : 'light'} />
       <RootNavigator />
     </SafeAreaProvider>
   );

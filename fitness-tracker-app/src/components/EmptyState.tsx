@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, typography } from '@/theme';
+import { useColors, spacing, typography, AppColors } from '@/theme';
 
 interface EmptyStateProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -10,6 +10,9 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ icon, title, subtitle }: EmptyStateProps) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   return (
     <View style={styles.container}>
       <Ionicons name={icon} size={40} color={colors.textMuted} />
@@ -19,18 +22,19 @@ export function EmptyState({ icon, title, subtitle }: EmptyStateProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.xxl,
-    gap: spacing.sm,
-  },
-  title: { ...typography.h3, color: colors.textSecondary },
-  subtitle: {
-    ...typography.caption,
-    color: colors.textMuted,
-    textAlign: 'center',
-    paddingHorizontal: spacing.xl,
-  },
-});
+const makeStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    container: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: spacing.xxl,
+      gap: spacing.sm,
+    },
+    title: { ...typography.h3, color: colors.textSecondary },
+    subtitle: {
+      ...typography.caption,
+      color: colors.textMuted,
+      textAlign: 'center',
+      paddingHorizontal: spacing.xl,
+    },
+  });

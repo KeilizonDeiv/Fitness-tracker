@@ -1,16 +1,14 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
-import { colors, spacing, typography } from '@/theme';
+import { useColors, spacing, typography, AppColors } from '@/theme';
 import { Logo } from '@/components/Logo';
 import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
 import { useProfileStore } from '@/store/profileStore';
 
-interface OnboardingScreenProps {
-  onDone: () => void;
-}
-
-export function OnboardingScreen({ onDone }: OnboardingScreenProps) {
+export function OnboardingScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const updateProfile = useProfileStore((s) => s.updateProfile);
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
@@ -22,7 +20,6 @@ export function OnboardingScreen({ onDone }: OnboardingScreenProps) {
     setSaving(true);
     await updateProfile({ name: name.trim(), hasOnboarded: true });
     setSaving(false);
-    onDone();
   };
 
   return (
@@ -58,26 +55,27 @@ export function OnboardingScreen({ onDone }: OnboardingScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.xl,
-  },
-  title: {
-    ...typography.h1,
-    color: colors.textPrimary,
-    marginTop: spacing.lg,
-    textAlign: 'center',
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
-    marginBottom: spacing.xl,
-    textAlign: 'center',
-  },
-  form: { width: '100%' },
-});
+const makeStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
+    content: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: spacing.xl,
+    },
+    title: {
+      ...typography.h1,
+      color: colors.textPrimary,
+      marginTop: spacing.lg,
+      textAlign: 'center',
+    },
+    subtitle: {
+      ...typography.body,
+      color: colors.textSecondary,
+      marginTop: spacing.xs,
+      marginBottom: spacing.xl,
+      textAlign: 'center',
+    },
+    form: { width: '100%' },
+  });

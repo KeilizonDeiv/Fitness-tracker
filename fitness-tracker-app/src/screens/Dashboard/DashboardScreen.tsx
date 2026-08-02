@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, spacing, typography } from '@/theme';
+import { useColors, spacing, typography, AppColors } from '@/theme';
 import { Card } from '@/components/Card';
 import { StatCard } from '@/components/StatCard';
 import { ProgressBar } from '@/components/ProgressBar';
@@ -23,6 +23,9 @@ import {
 import { formatShortDate } from '@/utils/date';
 
 export function DashboardScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const workouts = useWorkoutStore((s) => s.workouts);
   const metrics = useMetricsStore((s) => s.metrics);
   const waterLogs = useWaterStore((s) => s.logs);
@@ -97,20 +100,21 @@ export function DashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  greeting: { ...typography.h1, color: colors.textPrimary },
-  subGreeting: { ...typography.body, color: colors.textSecondary, marginBottom: spacing.lg },
-  statsRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md },
-  hydrationCard: { marginBottom: spacing.xl, gap: spacing.sm },
-  hydrationHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardTitle: { ...typography.h3, color: colors.textPrimary },
-  hydrationValue: { ...typography.caption, color: colors.textSecondary },
-  sectionTitle: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.sm },
-  workoutCard: { marginBottom: spacing.sm },
-  workoutRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  workoutName: { ...typography.h3, fontSize: 15, color: colors.textPrimary },
-  workoutDate: { ...typography.caption, color: colors.textMuted },
-  workoutMeta: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
-});
+const makeStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+    greeting: { ...typography.h1, color: colors.textPrimary },
+    subGreeting: { ...typography.body, color: colors.textSecondary, marginBottom: spacing.lg },
+    statsRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md },
+    hydrationCard: { marginBottom: spacing.xl, gap: spacing.sm },
+    hydrationHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    cardTitle: { ...typography.h3, color: colors.textPrimary },
+    hydrationValue: { ...typography.caption, color: colors.textSecondary },
+    sectionTitle: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.sm },
+    workoutCard: { marginBottom: spacing.sm },
+    workoutRow: { flexDirection: 'row', justifyContent: 'space-between' },
+    workoutName: { ...typography.h3, fontSize: 15, color: colors.textPrimary },
+    workoutDate: { ...typography.caption, color: colors.textMuted },
+    workoutMeta: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
+  });

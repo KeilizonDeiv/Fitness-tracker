@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { colors, spacing, typography } from '@/theme';
+import { useColors, spacing, typography, radius, AppColors } from '@/theme';
 import { Card } from '@/components/Card';
 import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
@@ -13,6 +16,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useProfileStore } from '@/store/profileStore';
 import { useGoalsStore } from '@/store/goalsStore';
 import { GoalType } from '@/types';
+import { RootStackParamList } from '@/navigation/types';
 
 const GOAL_TYPES: { type: GoalType; label: string }[] = [
   { type: 'weight_target', label: 'Target weight (kg)' },
@@ -21,6 +25,10 @@ const GOAL_TYPES: { type: GoalType; label: string }[] = [
 ];
 
 export function ProfileScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const profile = useProfileStore((s) => s.profile);
   const updateProfile = useProfileStore((s) => s.updateProfile);
 
@@ -49,7 +57,16 @@ export function ProfileScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Profile</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>Profile</Text>
+          <Pressable
+            style={styles.settingsBtn}
+            onPress={() => navigation.navigate('Settings')}
+            hitSlop={8}
+          >
+            <Ionicons name="settings-outline" size={22} color={colors.textPrimary} />
+          </Pressable>
+        </View>
 
         <Card style={styles.card}>
           <Text style={styles.cardTitle}>Your details</Text>
@@ -114,13 +131,28 @@ export function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  title: { ...typography.h1, color: colors.textPrimary, marginBottom: spacing.lg },
-  card: { marginBottom: spacing.lg, gap: spacing.sm },
-  cardTitle: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.xs },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginBottom: spacing.sm },
-  chipBtn: { paddingHorizontal: spacing.sm, paddingVertical: spacing.xs },
-  sectionTitle: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.sm },
-});
+const makeStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: spacing.lg,
+    },
+    title: { ...typography.h1, color: colors.textPrimary },
+    settingsBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: radius.full,
+      backgroundColor: colors.bgElevated,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    card: { marginBottom: spacing.lg, gap: spacing.sm },
+    cardTitle: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.xs },
+    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginBottom: spacing.sm },
+    chipBtn: { paddingHorizontal: spacing.sm, paddingVertical: spacing.xs },
+    sectionTitle: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.sm },
+  });

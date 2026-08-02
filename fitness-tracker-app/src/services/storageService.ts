@@ -73,4 +73,20 @@ export const STORAGE_KEYS = {
   water: '@fittrack/water',
   goals: '@fittrack/goals',
   profile: '@fittrack/profile',
+  settings: '@fittrack/settings',
 } as const;
+
+/**
+ * Wipes all user fitness data (workouts, metrics, water, goals, profile) so the
+ * app returns to a first-launch state. Appearance/language preferences in
+ * `settings` are intentionally left untouched — those are app prefs, not data.
+ */
+export async function wipeAllData(): Promise<void> {
+  await AsyncStorage.multiRemove([
+    STORAGE_KEYS.workouts,
+    STORAGE_KEYS.metrics,
+    STORAGE_KEYS.water,
+    STORAGE_KEYS.goals,
+    STORAGE_KEYS.profile,
+  ]);
+}

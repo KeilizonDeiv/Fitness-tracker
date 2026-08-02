@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Modal, View, Text, StyleSheet } from 'react-native';
 import { Button } from './Button';
-import { colors, radius, spacing, typography } from '@/theme';
+import { useColors, radius, spacing, typography, AppColors } from '@/theme';
 
 interface ConfirmDialogProps {
   visible: boolean;
@@ -20,6 +20,9 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.overlay}>
@@ -36,24 +39,25 @@ export function ConfirmDialog({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.xl,
-  },
-  dialog: {
-    width: '100%',
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  title: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.xs },
-  message: { ...typography.body, color: colors.textSecondary, marginBottom: spacing.lg },
-  actions: { flexDirection: 'row', gap: spacing.sm },
-  flexBtn: { flex: 1 },
-});
+const makeStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: colors.overlay,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: spacing.xl,
+    },
+    dialog: {
+      width: '100%',
+      backgroundColor: colors.card,
+      borderRadius: radius.lg,
+      padding: spacing.lg,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    title: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.xs },
+    message: { ...typography.body, color: colors.textSecondary, marginBottom: spacing.lg },
+    actions: { flexDirection: 'row', gap: spacing.sm },
+    flexBtn: { flex: 1 },
+  });

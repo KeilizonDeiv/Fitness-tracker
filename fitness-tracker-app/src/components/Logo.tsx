@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, typography } from '@/theme';
+import { useColors, spacing, typography, AppColors } from '@/theme';
 
 interface LogoProps {
   size?: number;
@@ -9,6 +9,9 @@ interface LogoProps {
 }
 
 export function Logo({ size = 96, showName = false }: LogoProps) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   return (
     <View style={styles.container}>
       <View
@@ -28,17 +31,18 @@ export function Logo({ size = 96, showName = false }: LogoProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { alignItems: 'center' },
-  badge: {
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  name: {
-    ...typography.h1,
-    color: colors.textPrimary,
-    marginTop: spacing.lg,
-    letterSpacing: 0.5,
-  },
-});
+const makeStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    container: { alignItems: 'center' },
+    badge: {
+      backgroundColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    name: {
+      ...typography.h1,
+      color: colors.textPrimary,
+      marginTop: spacing.lg,
+      letterSpacing: 0.5,
+    },
+  });

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { colors, radius, spacing, typography } from '@/theme';
+import { useColors, radius, spacing, typography, AppColors } from '@/theme';
 import { Card } from '@/components/Card';
 import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
@@ -21,6 +21,9 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 type DetailRoute = RouteProp<RootStackParamList, 'WorkoutDetail'>;
 
 export function WorkoutDetailScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const navigation = useNavigation<Nav>();
   const { workoutId } = useRoute<DetailRoute>().params;
 
@@ -154,41 +157,42 @@ export function WorkoutDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-  },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  title: { ...typography.h1, color: colors.textPrimary },
-  meta: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
-  notes: { ...typography.body, color: colors.textMuted, marginTop: spacing.sm, fontStyle: 'italic' },
-  sectionTitle: { ...typography.h3, color: colors.textPrimary, marginTop: spacing.xl, marginBottom: spacing.sm },
-  exerciseCard: { marginBottom: spacing.md, gap: spacing.sm },
-  exerciseHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  exerciseName: { ...typography.h3, fontSize: 15, color: colors.textPrimary },
-  setRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.xs,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  setText: { ...typography.body, color: colors.textSecondary, fontSize: 13 },
-  setInputRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-end', marginTop: spacing.sm },
-  smallInput: { flex: 1, marginBottom: 0 },
-  addSetBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  newExerciseRow: { marginTop: spacing.md },
-});
+const makeStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.bg },
+    headerRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+    },
+    content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+    title: { ...typography.h1, color: colors.textPrimary },
+    meta: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
+    notes: { ...typography.body, color: colors.textMuted, marginTop: spacing.sm, fontStyle: 'italic' },
+    sectionTitle: { ...typography.h3, color: colors.textPrimary, marginTop: spacing.xl, marginBottom: spacing.sm },
+    exerciseCard: { marginBottom: spacing.md, gap: spacing.sm },
+    exerciseHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    exerciseName: { ...typography.h3, fontSize: 15, color: colors.textPrimary },
+    setRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: spacing.xs,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    setText: { ...typography.body, color: colors.textSecondary, fontSize: 13 },
+    setInputRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-end', marginTop: spacing.sm },
+    smallInput: { flex: 1, marginBottom: 0 },
+    addSetBtn: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.md,
+      backgroundColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: spacing.md,
+    },
+    newExerciseRow: { marginTop: spacing.md },
+  });
