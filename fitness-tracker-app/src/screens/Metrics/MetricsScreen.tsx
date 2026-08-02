@@ -13,12 +13,16 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 import { useMetricsStore } from '@/store/metricsStore';
 import { useProfileStore } from '@/store/profileStore';
+import { useSettingsStore } from '@/store/settingsStore';
 import { todayISO, formatShortDate } from '@/utils/date';
 import { bmi } from '@/utils/calculations';
+import { displayWeight, parseWeightToKg, weightUnitLabel } from '@/utils/units';
 
 export function MetricsScreen() {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const units = useSettingsStore((s) => s.settings.units);
+  const weightUnit = weightUnitLabel(units);
 
   const metrics = useMetricsStore((s) => s.metrics);
   const addMetric = useMetricsStore((s) => s.addMetric);
@@ -39,7 +43,7 @@ export function MetricsScreen() {
   const currentBmi = sorted[0] ? bmi(sorted[0].weightKg, profile.heightCm) : undefined;
 
   const handleSave = async () => {
-    const weightKg = Number(weightInput);
+    const weightKg = parseWeightToKg(weightInput, units);
     if (!weightKg || weightKg <= 0) return;
     await addMetric({
       date: todayISO(),
@@ -63,7 +67,7 @@ export function MetricsScreen() {
         {showForm && (
           <Card style={styles.formCard}>
             <Input
-              label="Weight (kg)"
+              label={`Weight (${weightUnit})`}
               keyboardType="numeric"
               placeholder="e.g. 68.5"
               value={weightInput}
@@ -106,7 +110,7 @@ export function MetricsScreen() {
           sorted.map((m) => (
             <ListRow
               key={m.id}
-              title={`${m.weightKg} kg`}
+              title={`${displayWeight(m.weightKg, units)} ${weightUnit}`}
               subtitle={`${formatShortDate(m.date)}${m.bodyFatPct ? ` · ${m.bodyFatPct}% body fat` : ''}`}
               onDelete={() => setPendingDeleteId(m.id)}
             />

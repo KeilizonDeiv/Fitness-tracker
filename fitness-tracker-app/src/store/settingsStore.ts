@@ -2,6 +2,13 @@ import { create } from 'zustand';
 import { Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '@/services/storageService';
+import { UnitSystem } from '@/utils/units';
+import {
+  cancelWaterReminders,
+  cancelWorkoutReminders,
+  scheduleWaterReminders,
+  scheduleWorkoutReminders,
+} from '@/services/notificationService';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type Language = 'en' | 'fil' | 'ja';
@@ -15,11 +22,17 @@ export const LANGUAGES: { code: Language; label: string }[] = [
 interface Settings {
   themeMode: ThemeMode;
   language: Language;
+  units: UnitSystem;
+  waterRemindersEnabled: boolean;
+  workoutRemindersEnabled: boolean;
 }
 
 const DEFAULT_SETTINGS: Settings = {
   themeMode: 'system',
   language: 'en',
+  units: 'metric',
+  waterRemindersEnabled: false,
+  workoutRemindersEnabled: false,
 };
 
 interface SettingsState {
@@ -29,6 +42,9 @@ interface SettingsState {
   hydrate: () => Promise<void>;
   setThemeMode: (mode: ThemeMode) => Promise<void>;
   setLanguage: (language: Language) => Promise<void>;
+  setUnits: (units: UnitSystem) => Promise<void>;
+  setWaterRemindersEnabled: (enabled: boolean) => Promise<boolean>;
+  setWorkoutRemindersEnabled: (enabled: boolean) => Promise<boolean>;
 }
 
 const persist = (settings: Settings) =>
@@ -64,6 +80,29 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const next = { ...get().settings, language };
     await persist(next);
     set({ settings: next });
+  },
+
+  setUnits: async (units) => {
+    const next = { ...get().settings, units };
+    await persist(next);
+    set({ settings: next });
+  },
+
+  // Returns the enabled state that actually took effect (permission may be denied).
+  setWaterRemindersEnabled: async (enabled) => {
+    const granted = enabled ? await scheduleWaterReminders() : await cancelWaterReminders();
+    const next = { ...get().settings, waterRemindersEnabled: enabled && granted };
+    await persist(next);
+    set({ settings: next });
+    return next.waterRemindersEnabled;
+  },
+
+  setWorkoutRemindersEnabled: async (enabled) => {
+    const granted = enabled ? await scheduleWorkoutReminders() : await cancelWorkoutReminders();
+    const next = { ...get().settings, workoutRemindersEnabled: enabled && granted };
+    await persist(next);
+    set({ settings: next });
+    return next.workoutRemindersEnabled;
   },
 }));
 

@@ -11,11 +11,18 @@ import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { EmptyState } from '@/components/EmptyState';
+import { ExercisePickerModal } from '@/components/ExercisePickerModal';
 
 import { useWorkoutStore } from '@/store/workoutStore';
+import { useSettingsStore } from '@/store/settingsStore';
 import { RootStackParamList } from '@/navigation/types';
 import { formatDate } from '@/utils/date';
 import { totalVolumeKg } from '@/utils/calculations';
+import {
+  displayWeight,
+  parseWeightToKg,
+  weightUnitLabel,
+} from '@/utils/units';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type DetailRoute = RouteProp<RootStackParamList, 'WorkoutDetail'>;
@@ -23,6 +30,8 @@ type DetailRoute = RouteProp<RootStackParamList, 'WorkoutDetail'>;
 export function WorkoutDetailScreen() {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const units = useSettingsStore((s) => s.settings.units);
+  const weightUnit = weightUnitLabel(units);
 
   const navigation = useNavigation<Nav>();
   const { workoutId } = useRoute<DetailRoute>().params;
@@ -33,7 +42,7 @@ export function WorkoutDetailScreen() {
   const addSet = useWorkoutStore((s) => s.addSet);
   const removeSet = useWorkoutStore((s) => s.removeSet);
 
-  const [newExerciseName, setNewExerciseName] = useState('');
+  const [pickerVisible, setPickerVisible] = useState(false);
   const [setInputs, setSetInputs] = useState<Record<string, { reps: string; weight: string }>>({});
   const [confirmDeleteExercise, setConfirmDeleteExercise] = useState<string | null>(null);
 
@@ -45,18 +54,12 @@ export function WorkoutDetailScreen() {
     );
   }
 
-  const handleAddExercise = async () => {
-    if (!newExerciseName.trim()) return;
-    await addExercise(workout.id, newExerciseName.trim());
-    setNewExerciseName('');
-  };
-
   const handleAddSet = async (exerciseId: string) => {
     const input = setInputs[exerciseId] || { reps: '', weight: '' };
     const reps = Number(input.reps) || 0;
-    const weight = Number(input.weight) || 0;
+    const weightKg = parseWeightToKg(input.weight, units);
     if (reps <= 0) return;
-    await addSet(workout.id, exerciseId, reps, weight);
+    await addSet(workout.id, exerciseId, reps, weightKg);
     setSetInputs((prev) => ({ ...prev, [exerciseId]: { reps: '', weight: '' } }));
   };
 
@@ -75,7 +78,7 @@ export function WorkoutDetailScreen() {
         <Text style={styles.title}>{workout.name}</Text>
         <Text style={styles.meta}>
           {formatDate(workout.date)} · {workout.durationMin} min · {workout.caloriesBurned} kcal ·{' '}
-          {totalVolumeKg(workout)} kg volume
+          {displayWeight(totalVolumeKg(workout), units)} {weightUnit} volume
         </Text>
         {workout.notes ? <Text style={styles.notes}>"{workout.notes}"</Text> : null}
 
@@ -97,7 +100,7 @@ export function WorkoutDetailScreen() {
             {exercise.sets.map((set, idx) => (
               <View key={set.id} style={styles.setRow}>
                 <Text style={styles.setText}>
-                  Set {idx + 1}: {set.reps} reps × {set.weightKg} kg
+                  Set {idx + 1}: {set.reps} reps × {displayWeight(set.weightKg, units)} {weightUnit}
                 </Text>
                 <Pressable onPress={() => removeSet(workout.id, exercise.id, set.id)} hitSlop={8}>
                   <Ionicons name="close-circle-outline" size={18} color={colors.textMuted} />
@@ -116,7 +119,7 @@ export function WorkoutDetailScreen() {
                 style={styles.smallInput}
               />
               <Input
-                label="Weight (kg)"
+                label={`Weight (${weightUnit})`}
                 keyboardType="numeric"
                 value={setInputs[exercise.id]?.weight ?? ''}
                 onChangeText={(v) =>
@@ -131,17 +134,20 @@ export function WorkoutDetailScreen() {
           </Card>
         ))}
 
-        <View style={styles.newExerciseRow}>
-          <Input
-            label="Add exercise"
-            placeholder="e.g. Bench Press"
-            value={newExerciseName}
-            onChangeText={setNewExerciseName}
-            style={{ flex: 1 }}
-          />
-        </View>
-        <Button label="Add exercise" variant="secondary" onPress={handleAddExercise} />
+        <Button
+          label="Add exercise"
+          variant="secondary"
+          onPress={() => setPickerVisible(true)}
+          icon={<Ionicons name="add" size={18} color={colors.textPrimary} />}
+        />
       </ScrollView>
+
+      <ExercisePickerModal
+        visible={pickerVisible}
+        initialCategory={workout.category}
+        onSelect={(name) => addExercise(workout.id, name)}
+        onClose={() => setPickerVisible(false)}
+      />
 
       <ConfirmDialog
         visible={!!confirmDeleteExercise}
@@ -194,5 +200,4 @@ const makeStyles = (colors: AppColors) =>
       justifyContent: 'center',
       marginBottom: spacing.md,
     },
-    newExerciseRow: { marginTop: spacing.md },
   });

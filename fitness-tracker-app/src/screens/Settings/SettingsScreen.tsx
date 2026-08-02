@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, Switch, Alert, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -17,13 +17,30 @@ import { useMetricsStore } from '@/store/metricsStore';
 import { useWaterStore } from '@/store/waterStore';
 import { useGoalsStore } from '@/store/goalsStore';
 import { useProfileStore } from '@/store/profileStore';
-import { wipeAllData } from '@/services/storageService';
+import { wipeAllData, exportAllData, importAllData } from '@/services/storageService';
+import { UnitSystem } from '@/utils/units';
 
 const THEME_OPTIONS: { mode: ThemeMode; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { mode: 'light', label: 'Light', icon: 'sunny-outline' },
   { mode: 'dark', label: 'Dark', icon: 'moon-outline' },
   { mode: 'system', label: 'System', icon: 'phone-portrait-outline' },
 ];
+
+const UNIT_OPTIONS: { value: UnitSystem; label: string }[] = [
+  { value: 'metric', label: 'Metric (kg, cm)' },
+  { value: 'imperial', label: 'Imperial (lb, in)' },
+];
+
+async function rehydrateAllStores() {
+  await Promise.all([
+    useWorkoutStore.getState().hydrate(),
+    useMetricsStore.getState().hydrate(),
+    useWaterStore.getState().hydrate(),
+    useGoalsStore.getState().hydrate(),
+    useProfileStore.getState().hydrate(),
+    useSettingsStore.getState().hydrate(),
+  ]);
+}
 
 export function SettingsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -34,23 +51,71 @@ export function SettingsScreen() {
   const setThemeMode = useSettingsStore((s) => s.setThemeMode);
   const language = useSettingsStore((s) => s.settings.language);
   const setLanguage = useSettingsStore((s) => s.setLanguage);
+  const units = useSettingsStore((s) => s.settings.units);
+  const setUnits = useSettingsStore((s) => s.setUnits);
+  const waterRemindersEnabled = useSettingsStore((s) => s.settings.waterRemindersEnabled);
+  const setWaterRemindersEnabled = useSettingsStore((s) => s.setWaterRemindersEnabled);
+  const workoutRemindersEnabled = useSettingsStore((s) => s.settings.workoutRemindersEnabled);
+  const setWorkoutRemindersEnabled = useSettingsStore((s) => s.setWorkoutRemindersEnabled);
 
   const [confirmWipeVisible, setConfirmWipeVisible] = useState(false);
   const [wiping, setWiping] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const handleWipe = async () => {
     setWiping(true);
     await wipeAllData();
-    await Promise.all([
-      useWorkoutStore.getState().hydrate(),
-      useMetricsStore.getState().hydrate(),
-      useWaterStore.getState().hydrate(),
-      useGoalsStore.getState().hydrate(),
-      useProfileStore.getState().hydrate(),
-    ]);
+    await rehydrateAllStores();
     setWiping(false);
     setConfirmWipeVisible(false);
     // App.tsx reacts to hasOnboarded flipping to false and swaps to onboarding.
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      await exportAllData();
+    } catch (err) {
+      Alert.alert('Export failed', 'Could not create the backup file. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleImport = async () => {
+    setImporting(true);
+    try {
+      const result = await importAllData();
+      if (result === 'imported') {
+        await rehydrateAllStores();
+        Alert.alert('Import complete', 'Your data has been restored from the backup file.');
+      }
+    } catch (err) {
+      Alert.alert('Import failed', "That file doesn't look like a valid FitTrack backup.");
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleToggleWaterReminders = async (value: boolean) => {
+    const granted = await setWaterRemindersEnabled(value);
+    if (value && !granted) {
+      Alert.alert(
+        'Notifications disabled',
+        'Enable notifications for FitTrack in your device settings to use reminders.'
+      );
+    }
+  };
+
+  const handleToggleWorkoutReminders = async (value: boolean) => {
+    const granted = await setWorkoutRemindersEnabled(value);
+    if (value && !granted) {
+      Alert.alert(
+        'Notifications disabled',
+        'Enable notifications for FitTrack in your device settings to use reminders.'
+      );
+    }
   };
 
   return (
@@ -88,6 +153,51 @@ export function SettingsScreen() {
           </View>
         </Card>
 
+        <Text style={styles.sectionTitle}>Units</Text>
+        <Card style={styles.card}>
+          {UNIT_OPTIONS.map((opt) => {
+            const selected = units === opt.value;
+            return (
+              <Button
+                key={opt.value}
+                label={opt.label}
+                variant={selected ? 'primary' : 'ghost'}
+                onPress={() => setUnits(opt.value)}
+                icon={
+                  selected ? <Ionicons name="checkmark" size={16} color={colors.bg} /> : undefined
+                }
+                style={styles.languageBtn}
+              />
+            );
+          })}
+        </Card>
+
+        <Text style={styles.sectionTitle}>Reminders</Text>
+        <Card style={styles.card}>
+          <View style={styles.switchRow}>
+            <View style={styles.switchLabelWrap}>
+              <Text style={styles.switchLabel}>Water reminder</Text>
+              <Text style={styles.switchHint}>Daily nudge at 2:00 PM</Text>
+            </View>
+            <Switch
+              value={waterRemindersEnabled}
+              onValueChange={handleToggleWaterReminders}
+              trackColor={{ true: colors.primary, false: colors.border }}
+            />
+          </View>
+          <View style={styles.switchRow}>
+            <View style={styles.switchLabelWrap}>
+              <Text style={styles.switchLabel}>Workout reminder</Text>
+              <Text style={styles.switchHint}>Daily nudge at 6:00 PM</Text>
+            </View>
+            <Switch
+              value={workoutRemindersEnabled}
+              onValueChange={handleToggleWorkoutReminders}
+              trackColor={{ true: colors.primary, false: colors.border }}
+            />
+          </View>
+        </Card>
+
         <Text style={styles.sectionTitle}>Language</Text>
         <Card style={styles.card}>
           {LANGUAGES.map((opt) => {
@@ -113,6 +223,26 @@ export function SettingsScreen() {
         </Card>
 
         <Text style={styles.sectionTitle}>Data</Text>
+        <Card style={styles.card}>
+          <Text style={styles.cardBody}>
+            Export a backup of all your data, or restore from a previous backup file.
+          </Text>
+          <Button
+            label={exporting ? 'Exporting…' : 'Export Data'}
+            variant="secondary"
+            onPress={handleExport}
+            disabled={exporting}
+            icon={<Ionicons name="download-outline" size={16} color={colors.textPrimary} />}
+          />
+          <Button
+            label={importing ? 'Importing…' : 'Import Data'}
+            variant="secondary"
+            onPress={handleImport}
+            disabled={importing}
+            icon={<Ionicons name="cloud-upload-outline" size={16} color={colors.textPrimary} />}
+          />
+        </Card>
+
         <Card style={styles.card}>
           <Text style={styles.cardBody}>
             Permanently erase every workout, metric, water log, goal, and your profile from this
@@ -163,4 +293,13 @@ const makeStyles = (colors: AppColors) =>
     optionBtn: { flex: 1, paddingHorizontal: spacing.sm },
     languageBtn: { justifyContent: 'flex-start', paddingHorizontal: spacing.md },
     hint: { ...typography.caption, color: colors.textMuted, marginTop: spacing.xs },
+    switchRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: spacing.xs,
+    },
+    switchLabelWrap: { flex: 1, marginRight: spacing.sm },
+    switchLabel: { ...typography.body, color: colors.textPrimary },
+    switchHint: { ...typography.caption, color: colors.textMuted, marginTop: 2 },
   });
