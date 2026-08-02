@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, spacing, typography } from '@/theme';
+import { useColors, spacing, typography, AppColors } from '@/theme';
 import { Card } from '@/components/Card';
 import { StatCard } from '@/components/StatCard';
 import { ProgressBar } from '@/components/ProgressBar';
@@ -12,6 +12,7 @@ import { useWorkoutStore } from '@/store/workoutStore';
 import { useMetricsStore } from '@/store/metricsStore';
 import { useWaterStore } from '@/store/waterStore';
 import { useProfileStore } from '@/store/profileStore';
+import { useSettingsStore } from '@/store/settingsStore';
 
 import {
   workoutsThisWeek,
@@ -21,8 +22,14 @@ import {
   waterTodayMl,
 } from '@/utils/calculations';
 import { formatShortDate } from '@/utils/date';
+import { displayWeight, weightUnitLabel, kgToLb } from '@/utils/units';
 
 export function DashboardScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const units = useSettingsStore((s) => s.settings.units);
+  const weightUnit = weightUnitLabel(units);
+
   const workouts = useWorkoutStore((s) => s.workouts);
   const metrics = useMetricsStore((s) => s.metrics);
   const waterLogs = useWaterStore((s) => s.logs);
@@ -51,13 +58,17 @@ export function DashboardScreen() {
           <StatCard
             icon="body"
             label="Weight"
-            value={weight ? `${weight.weightKg} kg` : '—'}
+            value={weight ? `${displayWeight(weight.weightKg, units)} ${weightUnit}` : '—'}
             accent={colors.accent}
           />
           <StatCard
             icon="trending-down"
             label="Change"
-            value={change !== undefined ? `${change > 0 ? '+' : ''}${change.toFixed(1)} kg` : '—'}
+            value={
+              change !== undefined
+                ? `${change > 0 ? '+' : ''}${(units === 'metric' ? change : kgToLb(change)).toFixed(1)} ${weightUnit}`
+                : '—'
+            }
             accent={change !== undefined && change < 0 ? colors.success : colors.danger}
           />
         </View>
@@ -97,20 +108,21 @@ export function DashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  greeting: { ...typography.h1, color: colors.textPrimary },
-  subGreeting: { ...typography.body, color: colors.textSecondary, marginBottom: spacing.lg },
-  statsRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md },
-  hydrationCard: { marginBottom: spacing.xl, gap: spacing.sm },
-  hydrationHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardTitle: { ...typography.h3, color: colors.textPrimary },
-  hydrationValue: { ...typography.caption, color: colors.textSecondary },
-  sectionTitle: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.sm },
-  workoutCard: { marginBottom: spacing.sm },
-  workoutRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  workoutName: { ...typography.h3, fontSize: 15, color: colors.textPrimary },
-  workoutDate: { ...typography.caption, color: colors.textMuted },
-  workoutMeta: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
-});
+const makeStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+    greeting: { ...typography.h1, color: colors.textPrimary },
+    subGreeting: { ...typography.body, color: colors.textSecondary, marginBottom: spacing.lg },
+    statsRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md },
+    hydrationCard: { marginBottom: spacing.xl, gap: spacing.sm },
+    hydrationHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    cardTitle: { ...typography.h3, color: colors.textPrimary },
+    hydrationValue: { ...typography.caption, color: colors.textSecondary },
+    sectionTitle: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.sm },
+    workoutCard: { marginBottom: spacing.sm },
+    workoutRow: { flexDirection: 'row', justifyContent: 'space-between' },
+    workoutName: { ...typography.h3, fontSize: 15, color: colors.textPrimary },
+    workoutDate: { ...typography.caption, color: colors.textMuted },
+    workoutMeta: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
+  });

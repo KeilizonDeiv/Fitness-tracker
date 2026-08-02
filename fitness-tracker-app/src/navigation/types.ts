@@ -3,6 +3,7 @@ export type RootStackParamList = {
   WorkoutForm: { workoutId?: string } | undefined;
   WorkoutDetail: { workoutId: string };
   GoalForm: { goalId?: string } | undefined;
+  Settings: undefined;
 };
 
 export type TabParamList = {

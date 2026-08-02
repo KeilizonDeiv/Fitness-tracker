@@ -2,7 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { TabParamList } from './types';
-import { colors } from '@/theme';
+import { useColors } from '@/theme';
 
 import { DashboardScreen } from '@/screens/Dashboard/DashboardScreen';
 import { WorkoutListScreen } from '@/screens/Workouts/WorkoutListScreen';
@@ -21,6 +21,8 @@ const ICONS: Record<keyof TabParamList, keyof typeof Ionicons.glyphMap> = {
 };
 
 export function TabNavigator() {
+  const colors = useColors();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({

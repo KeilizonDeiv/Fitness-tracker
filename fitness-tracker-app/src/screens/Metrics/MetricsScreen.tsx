@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, radius, spacing, typography } from '@/theme';
+import { useColors, radius, spacing, typography, AppColors } from '@/theme';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { Card } from '@/components/Card';
 import { Input } from '@/components/Input';
@@ -13,10 +13,17 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 import { useMetricsStore } from '@/store/metricsStore';
 import { useProfileStore } from '@/store/profileStore';
+import { useSettingsStore } from '@/store/settingsStore';
 import { todayISO, formatShortDate } from '@/utils/date';
 import { bmi } from '@/utils/calculations';
+import { displayWeight, parseWeightToKg, weightUnitLabel } from '@/utils/units';
 
 export function MetricsScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const units = useSettingsStore((s) => s.settings.units);
+  const weightUnit = weightUnitLabel(units);
+
   const metrics = useMetricsStore((s) => s.metrics);
   const addMetric = useMetricsStore((s) => s.addMetric);
   const deleteMetric = useMetricsStore((s) => s.deleteMetric);
@@ -36,7 +43,7 @@ export function MetricsScreen() {
   const currentBmi = sorted[0] ? bmi(sorted[0].weightKg, profile.heightCm) : undefined;
 
   const handleSave = async () => {
-    const weightKg = Number(weightInput);
+    const weightKg = parseWeightToKg(weightInput, units);
     if (!weightKg || weightKg <= 0) return;
     await addMetric({
       date: todayISO(),
@@ -60,7 +67,7 @@ export function MetricsScreen() {
         {showForm && (
           <Card style={styles.formCard}>
             <Input
-              label="Weight (kg)"
+              label={`Weight (${weightUnit})`}
               keyboardType="numeric"
               placeholder="e.g. 68.5"
               value={weightInput}
@@ -103,7 +110,7 @@ export function MetricsScreen() {
           sorted.map((m) => (
             <ListRow
               key={m.id}
-              title={`${m.weightKg} kg`}
+              title={`${displayWeight(m.weightKg, units)} ${weightUnit}`}
               subtitle={`${formatShortDate(m.date)}${m.bodyFatPct ? ` · ${m.bodyFatPct}% body fat` : ''}`}
               onDelete={() => setPendingDeleteId(m.id)}
             />
@@ -124,15 +131,16 @@ export function MetricsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  formCard: { marginBottom: spacing.lg, gap: spacing.sm },
-  chartCard: { marginBottom: spacing.xl },
-  chartTitle: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.md },
-  chartRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, height: 110 },
-  barWrap: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: spacing.xs },
-  bar: { width: '70%', backgroundColor: colors.primary, borderRadius: radius.sm },
-  barLabel: { ...typography.caption, fontSize: 10, color: colors.textMuted },
-  sectionTitle: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.sm },
-});
+const makeStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+    formCard: { marginBottom: spacing.lg, gap: spacing.sm },
+    chartCard: { marginBottom: spacing.xl },
+    chartTitle: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.md },
+    chartRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, height: 110 },
+    barWrap: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: spacing.xs },
+    bar: { width: '70%', backgroundColor: colors.primary, borderRadius: radius.sm },
+    barLabel: { ...typography.caption, fontSize: 10, color: colors.textMuted },
+    sectionTitle: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.sm },
+  });

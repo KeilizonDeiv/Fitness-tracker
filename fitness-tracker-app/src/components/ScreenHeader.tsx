@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, spacing, typography } from '@/theme';
+import { useColors, radius, spacing, typography, AppColors } from '@/theme';
 
 interface ScreenHeaderProps {
   title: string;
@@ -10,6 +10,9 @@ interface ScreenHeaderProps {
 }
 
 export function ScreenHeader({ title, subtitle, onAddPress }: ScreenHeaderProps) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   return (
     <View style={styles.container}>
       <View>
@@ -25,21 +28,22 @@ export function ScreenHeader({ title, subtitle, onAddPress }: ScreenHeaderProps)
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.lg,
-  },
-  title: { ...typography.h1, color: colors.textPrimary },
-  subtitle: { ...typography.body, color: colors.textSecondary, marginTop: 2 },
-  addBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.full,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const makeStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: spacing.lg,
+    },
+    title: { ...typography.h1, color: colors.textPrimary },
+    subtitle: { ...typography.body, color: colors.textSecondary, marginTop: 2 },
+    addBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: radius.full,
+      backgroundColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  });

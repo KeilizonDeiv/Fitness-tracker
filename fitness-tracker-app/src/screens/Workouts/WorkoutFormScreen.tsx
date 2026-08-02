@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { colors, radius, spacing, typography } from '@/theme';
+import { useColors, radius, spacing, typography, AppColors } from '@/theme';
 import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
 
@@ -19,6 +19,9 @@ type FormRoute = RouteProp<RootStackParamList, 'WorkoutForm'>;
 const CATEGORIES: WorkoutCategory[] = ['strength', 'cardio', 'flexibility', 'sports', 'other'];
 
 export function WorkoutFormScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const navigation = useNavigation<Nav>();
   const route = useRoute<FormRoute>();
   const workoutId = route.params?.workoutId;
@@ -120,22 +123,23 @@ export function WorkoutFormScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  title: { ...typography.h2, color: colors.textPrimary, marginBottom: spacing.lg },
-  label: { ...typography.label, color: colors.textSecondary, marginBottom: spacing.sm },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
-  chip: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.full,
-    backgroundColor: colors.bgElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { ...typography.caption, color: colors.textSecondary, textTransform: 'capitalize' },
-  chipTextActive: { color: colors.bg, fontWeight: '700' },
-  actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg },
-});
+const makeStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+    title: { ...typography.h2, color: colors.textPrimary, marginBottom: spacing.lg },
+    label: { ...typography.label, color: colors.textSecondary, marginBottom: spacing.sm },
+    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
+    chip: {
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.md,
+      borderRadius: radius.full,
+      backgroundColor: colors.bgElevated,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+    chipText: { ...typography.caption, color: colors.textSecondary, textTransform: 'capitalize' },
+    chipTextActive: { color: colors.bg, fontWeight: '700' },
+    actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg },
+  });

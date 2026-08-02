@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, radius, spacing, typography } from '@/theme';
+import { useColors, radius, spacing, typography, AppColors } from '@/theme';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { Card } from '@/components/Card';
 import { ProgressBar } from '@/components/ProgressBar';
@@ -17,6 +17,9 @@ import { isSameDay } from '@/utils/date';
 const QUICK_AMOUNTS = [150, 250, 500, 750];
 
 export function WaterScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const logs = useWaterStore((s) => s.logs);
   const addLog = useWaterStore((s) => s.addLog);
   const removeLog = useWaterStore((s) => s.removeLog);
@@ -72,23 +75,24 @@ export function WaterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  summaryCard: { alignItems: 'center', gap: spacing.sm, marginBottom: spacing.xl },
-  summaryValue: { ...typography.h1, color: colors.primary },
-  summaryTarget: { ...typography.caption, color: colors.textSecondary },
-  goalHit: { ...typography.body, color: colors.success, marginTop: spacing.xs },
-  sectionTitle: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.sm },
-  quickRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.xl, flexWrap: 'wrap' },
-  quickBtn: {
-    flexGrow: 1,
-    paddingVertical: spacing.md,
-    borderRadius: radius.md,
-    backgroundColor: colors.bgElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-  },
-  quickBtnText: { ...typography.h3, fontSize: 14, color: colors.primary },
-});
+const makeStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+    summaryCard: { alignItems: 'center', gap: spacing.sm, marginBottom: spacing.xl },
+    summaryValue: { ...typography.h1, color: colors.primary },
+    summaryTarget: { ...typography.caption, color: colors.textSecondary },
+    goalHit: { ...typography.body, color: colors.success, marginTop: spacing.xs },
+    sectionTitle: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.sm },
+    quickRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.xl, flexWrap: 'wrap' },
+    quickBtn: {
+      flexGrow: 1,
+      paddingVertical: spacing.md,
+      borderRadius: radius.md,
+      backgroundColor: colors.bgElevated,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+    },
+    quickBtnText: { ...typography.h3, fontSize: 14, color: colors.primary },
+  });

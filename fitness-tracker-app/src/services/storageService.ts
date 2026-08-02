@@ -1,4 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+// Legacy (string-based) FileSystem API — still the simplest fit for a one-shot JSON export/import.
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker';
 import { Repository } from '@/types';
 
 /**
@@ -73,4 +77,70 @@ export const STORAGE_KEYS = {
   water: '@fittrack/water',
   goals: '@fittrack/goals',
   profile: '@fittrack/profile',
+  settings: '@fittrack/settings',
 } as const;
+
+/**
+ * Wipes all user fitness data (workouts, metrics, water, goals, profile) so the
+ * app returns to a first-launch state. Appearance/language preferences in
+ * `settings` are intentionally left untouched — those are app prefs, not data.
+ */
+export async function wipeAllData(): Promise<void> {
+  await AsyncStorage.multiRemove([
+    STORAGE_KEYS.workouts,
+    STORAGE_KEYS.metrics,
+    STORAGE_KEYS.water,
+    STORAGE_KEYS.goals,
+    STORAGE_KEYS.profile,
+  ]);
+}
+
+const BACKUP_FORMAT_VERSION = 1;
+
+/**
+ * Bundles every AsyncStorage key (including settings) into one JSON file and
+ * opens the native share sheet so the user can save it wherever they like.
+ */
+export async function exportAllData(): Promise<void> {
+  const keys = Object.values(STORAGE_KEYS);
+  const pairs = await AsyncStorage.multiGet(keys);
+
+  const data: Record<string, unknown> = {};
+  for (const [key, raw] of pairs) {
+    if (raw != null) data[key] = JSON.parse(raw);
+  }
+
+  const bundle = {
+    formatVersion: BACKUP_FORMAT_VERSION,
+    exportedAt: new Date().toISOString(),
+    data,
+  };
+
+  const fileUri = `${FileSystem.documentDirectory}fittrack-backup.json`;
+  await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(bundle, null, 2));
+
+  if (await Sharing.isAvailableAsync()) {
+    await Sharing.shareAsync(fileUri, { mimeType: 'application/json' });
+  }
+}
+
+/**
+ * Opens a file picker for a previously-exported backup JSON and restores it,
+ * overwriting whatever is currently stored under each key present in the file.
+ */
+export async function importAllData(): Promise<'imported' | 'cancelled'> {
+  const result = await DocumentPicker.getDocumentAsync({ type: 'application/json' });
+  if (result.canceled || !result.assets?.[0]) return 'cancelled';
+
+  const raw = await FileSystem.readAsStringAsync(result.assets[0].uri);
+  const bundle = JSON.parse(raw) as { data?: Record<string, unknown> };
+  if (!bundle.data) throw new Error('Invalid backup file');
+
+  const validKeys = new Set<string>(Object.values(STORAGE_KEYS));
+  const pairs: [string, string][] = Object.entries(bundle.data)
+    .filter(([key]) => validKeys.has(key))
+    .map(([key, value]) => [key, JSON.stringify(value)]);
+
+  await AsyncStorage.multiSet(pairs);
+  return 'imported';
+}

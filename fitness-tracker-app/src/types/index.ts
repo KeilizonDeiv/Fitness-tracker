@@ -65,6 +65,7 @@ export interface UserProfile {
   startingWeightKg: number;
   weeklyWorkoutTarget: number;
   dailyWaterTargetMl: number;
+  hasOnboarded: boolean;
 }
 
 // ---- Generic CRUD contract used by the storage layer ----

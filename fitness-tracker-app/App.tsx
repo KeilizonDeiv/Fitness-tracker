@@ -1,25 +1,31 @@
 import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { RootNavigator } from '@/navigation/RootNavigator';
-import { colors } from '@/theme';
+import { SplashScreen } from '@/screens/Onboarding/SplashScreen';
+import { OnboardingScreen } from '@/screens/Onboarding/OnboardingScreen';
 
 import { useWorkoutStore } from '@/store/workoutStore';
 import { useMetricsStore } from '@/store/metricsStore';
 import { useWaterStore } from '@/store/waterStore';
 import { useGoalsStore } from '@/store/goalsStore';
 import { useProfileStore } from '@/store/profileStore';
+import { useSettingsStore, useResolvedThemeMode } from '@/store/settingsStore';
 
 export default function App() {
-  const [ready, setReady] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  const [splashDone, setSplashDone] = useState(false);
+
+  const hasOnboarded = useProfileStore((s) => s.profile.hasOnboarded);
+  const resolvedTheme = useResolvedThemeMode();
 
   const hydrateWorkouts = useWorkoutStore((s) => s.hydrate);
   const hydrateMetrics = useMetricsStore((s) => s.hydrate);
   const hydrateWater = useWaterStore((s) => s.hydrate);
   const hydrateGoals = useGoalsStore((s) => s.hydrate);
   const hydrateProfile = useProfileStore((s) => s.hydrate);
+  const hydrateSettings = useSettingsStore((s) => s.hydrate);
 
   useEffect(() => {
     (async () => {
@@ -29,32 +35,24 @@ export default function App() {
         hydrateWater(),
         hydrateGoals(),
         hydrateProfile(),
+        hydrateSettings(),
       ]);
-      setReady(true);
+      setHydrated(true);
     })();
   }, []);
 
-  if (!ready) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+  if (!hydrated || !splashDone) {
+    return <SplashScreen onFinish={() => setSplashDone(true)} />;
+  }
+
+  if (!hasOnboarded) {
+    return <OnboardingScreen />;
   }
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" />
+      <StatusBar style={resolvedTheme === 'light' ? 'dark' : 'light'} />
       <RootNavigator />
     </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  loading: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.bg,
-  },
-});

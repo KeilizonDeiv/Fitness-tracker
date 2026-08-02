@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { colors, spacing } from '@/theme';
+import { useColors, spacing, AppColors } from '@/theme';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { ListRow } from '@/components/ListRow';
 import { EmptyState } from '@/components/EmptyState';
@@ -18,6 +18,9 @@ import { totalSets } from '@/utils/calculations';
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export function WorkoutListScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const navigation = useNavigation<Nav>();
   const workouts = useWorkoutStore((s) => s.workouts);
   const deleteWorkout = useWorkoutStore((s) => s.deleteWorkout);
@@ -69,7 +72,8 @@ export function WorkoutListScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
-  content: { flex: 1, padding: spacing.lg },
-});
+const makeStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.bg },
+    content: { flex: 1, padding: spacing.lg },
+  });
